@@ -1,7 +1,7 @@
 import sys
 import sexp
-import pprint
 import translator
+from cegis import CounterExampleGuider
 
 
 def Extend(Stmts, Productions):
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     benchmarkFile = open(sys.argv[1])
     bm = stripComments(benchmarkFile)
     bmExpr = sexp.sexp.parseString(bm, parseAll=True).asList()[0]  # Parse string to python list
-    checker = translator.ReadQuery(bmExpr)
+    checker, var_table = translator.ReadQuery(bmExpr)
     SynFunExpr = []
     StartSym = 'My-Start-Symbol'  # virtual starting symbol
     for expr in bmExpr:
@@ -56,28 +56,25 @@ if __name__ == '__main__':
                 # but you will suffer from these tuples.
             else:
                 Productions[NTName].append(NT)
+
+    # BFS
+    cegis = CounterExampleGuider(FuncDefine, checker, var_table)
     Count = 0
+    TE_set = set()
     while len(BfsQueue) != 0:
         Curr = BfsQueue.pop(0)
+        print(Curr, Count)
         TryExtend = Extend(Curr, Productions)
         if len(TryExtend) == 0:  # Nothing to extend
-            FuncDefineStr = translator.toString(FuncDefine, ForceBracket=True)  # use Force Bracket = True on
-            # function definition. MAGIC CODE. DO NOT MODIFY THE ARGUMENT ForceBracket = True.
-            CurrStr = translator.toString(Curr)
-
-            Str = FuncDefineStr[:-1] + ' ' + CurrStr + FuncDefineStr[
-                -1]  # insert Program just before the last bracket ')'
             Count += 1
-            counterexample = checker.check(Str)
-            if counterexample == None:  # No counter-example
-                Ans = Str
+            found = cegis.check(Curr)
+            if found:
                 break
 
-        TE_set = set()
         for TE in TryExtend:
             TE_str = str(TE)
             if not TE_str in TE_set:
                 BfsQueue.append(TE)
                 TE_set.add(TE_str)
 
-    print(Ans)
+    print(cegis.get_ans())

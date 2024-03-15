@@ -5,3 +5,5 @@ lib
 *.cfg
 .Python
 .idea
+test.txt
+debug.txt

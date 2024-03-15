@@ -99,7 +99,6 @@ def ReadQuery(bmExpr):
 
         def check(self, funcDefStr):
             self.solver.push()
-
             spec_smt2 = [funcDefStr]
             for constraint in Constraints:
                 spec_smt2.append('(assert %s)' % (toString(constraint[1:])))
@@ -121,5 +120,17 @@ def ReadQuery(bmExpr):
 
                 return model
 
+        def push(self):
+            self.solver.push()
+
+        def pop(self):
+            self.solver.pop()
+
+        def add(self, *args):
+            self.solver.add(*args)
+
+        def sexpr(self):
+            return self.solver.sexpr()
+
     checker = Checker(VarTable, synFunction, Constraints)
-    return checker
+    return checker, VarTable
